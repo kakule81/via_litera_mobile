@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "112625247020",
+    "project_id": "via-litera-app",
+    "storage_bucket": "via-litera-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:112625247020:android:6a47ca2f891c8c8fd10289",
+        "android_client_info": {
+          "package_name": "com.example.via_litera_mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCuiZqn2vTOs_VXOedUdb0_X6b5BEmlq6c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
