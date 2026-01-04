@@ -20,34 +20,40 @@
 ## 📸 Ekran Görüntüleri (Screenshots)
 
 ### 🏠 Keşfet ve Oku
-Uygulamanın vitrini ve okuma deneyimi.
+Uygulamanın vitrini, arama motoru ve okuma deneyimi.
 
-<p float="left">
-  <img src="screenshots/1.png" width="30%" alt="Ana Sayfa" />
-  <img src="screenshots/4.png" width="30%" alt="Arama" />
-  <img src="screenshots/2.png" width="30%" alt="Okuma Modu" />
-</p>
+<table>
+  <tr>
+    <td align="center"><img src="screenshots/1.png" width="250px;" alt="Ana Sayfa"/><br /><sub><b>Ana Sayfa Vitrin</b></sub></td>
+    <td align="center"><img src="screenshots/4.png" width="250px;" alt="Arama Ekranı"/><br /><sub><b>Akıllı Arama</b></sub></td>
+    <td align="center"><img src="screenshots/2.png" width="250px;" alt="Okuma Modu"/><br /><sub><b>Gece Modu / Okuma</b></sub></td>
+  </tr>
+</table>
 
 ---
 
 ### ✍️ Yazar Stüdyosu
 Kendi hikayeni oluştur, yönet ve yayınla.
 
-<p float="left">
-  <img src="screenshots/5.png" width="30%" alt="Yazar Paneli" />
-  <img src="screenshots/6.png" width="30%" alt="Kitap Ekleme" />
-  <img src="screenshots/3.png" width="30%" alt="Yazma Editörü" />
-</p>
+<table>
+  <tr>
+    <td align="center"><img src="screenshots/5.png" width="250px;" alt="Yazar Paneli"/><br /><sub><b>Hikayelerim (Taslaklar)</b></sub></td>
+    <td align="center"><img src="screenshots/6.png" width="250px;" alt="Kitap Ekleme"/><br /><sub><b>Yeni Hikaye Oluşturma</b></sub></td>
+    <td align="center"><img src="screenshots/3.png" width="250px;" alt="Yazma Editörü"/><br /><sub><b>Yazma Editörü</b></sub></td>
+  </tr>
+</table>
 
 ---
 
 ### 👤 Profil ve Menü
 Kullanıcı istatistikleri ve navigasyon.
 
-<p float="left">
-  <img src="screenshots/8.png" width="30%" alt="Yan Menü" />
-  <img src="screenshots/7.png" width="30%" alt="Profil" />
-</p>
+<table>
+  <tr>
+    <td align="center"><img src="screenshots/8.png" width="250px;" alt="Yan Menü"/><br /><sub><b>Navigasyon Menüsü</b></sub></td>
+    <td align="center"><img src="screenshots/7.png" width="250px;" alt="Profil"/><br /><sub><b>Profil ve İstatistikler</b></sub></td>
+  </tr>
+</table>
 
 ---
 
