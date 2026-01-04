@@ -1,28 +1,50 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'core/app_colors.dart';
 import 'features/auth/login_screen.dart';
+import 'features/home/home_screen.dart';
+import 'core/auth_service.dart';
+import 'core/book_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(); // Firebase'i uyandır
-  runApp(const ViaLiteraApp());
+
+  // Web tarayıcısında "dart:io" veya veritabanı başlatıcıya gerek yoktur.
+  // SharedPreferences web'de sorunsuz çalışır.
+
+  final prefs = await SharedPreferences.getInstance();
+  final bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthService()),
+        ChangeNotifierProvider(create: (_) => BookService()),
+      ],
+      child: MyApp(
+        startScreen: isLoggedIn ? const HomeScreen() : const LoginScreen(),
+      ),
+    ),
+  );
 }
 
-class ViaLiteraApp extends StatelessWidget {
-  const ViaLiteraApp({super.key});
+class MyApp extends StatelessWidget {
+  final Widget startScreen;
+  const MyApp({super.key, required this.startScreen});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
       title: 'Via Litera',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primary),
+        primaryColor: AppColors.primary,
         useMaterial3: true,
-        scaffoldBackgroundColor: AppColors.background,
+        // Web'de fontların düzgün görünmesi için
+        fontFamily: 'Roboto',
       ),
-      home: const LoginScreen(), // Açılış kapısı
+      home: startScreen,
     );
   }
 }

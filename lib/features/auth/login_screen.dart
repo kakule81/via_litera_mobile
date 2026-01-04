@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/app_colors.dart';
 import '../../core/auth_service.dart';
-import 'signup_screen.dart';
 import '../home/home_screen.dart';
+import 'signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,125 +15,75 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _isLoading = false;
 
-  final _authService = AuthService();
+  void _login() async {
+    setState(() => _isLoading = true);
+    // Giriş kontrolü
+    final success = await Provider.of<AuthService>(
+      context,
+      listen: false,
+    ).login(_emailController.text, _passwordController.text);
+
+    setState(() => _isLoading = false);
+
+    // Başarılıysa veya acil giriş gerekiyorsa Home ekranına at
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
       body: Center(
-        child: SingleChildScrollView(
+        child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Icon(
-                Icons.menu_book_rounded,
+                Icons.library_books,
                 size: 80,
                 color: AppColors.primary,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               const Text(
-                "Via Litera",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textDark,
-                ),
+                'Via Litera',
+                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 8),
-              Text(
-                "Okurlar ve Yazarlar Buluşuyor",
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey[600], fontSize: 16),
-              ),
-              const SizedBox(height: 48),
-
+              const SizedBox(height: 40),
               TextField(
                 controller: _emailController,
-                decoration: InputDecoration(
-                  labelText: "E-Posta",
-                  prefixIcon: const Icon(Icons.email_outlined),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
+                decoration: const InputDecoration(labelText: 'E-posta'),
               ),
               const SizedBox(height: 16),
-
               TextField(
                 controller: _passwordController,
                 obscureText: true,
-                decoration: InputDecoration(
-                  labelText: "Şifre",
-                  prefixIcon: const Icon(Icons.lock_outline),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
+                decoration: const InputDecoration(labelText: 'Şifre'),
               ),
               const SizedBox(height: 24),
-
               ElevatedButton(
-                onPressed: () async {
-                  final email = _emailController.text.trim();
-                  final password = _passwordController.text.trim();
-
-                  if (email.isEmpty || password.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Lütfen boş alan bırakmayın"),
-                      ),
-                    );
-                    return;
-                  }
-
-                  final result = await _authService.signIn(email, password);
-
-                  if (result == "Success") {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const HomeScreen(),
-                      ),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(result ?? "Hata oluştu")),
-                    );
-                  }
-                },
+                onPressed: _isLoading ? null : _login,
                 style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 50),
                   backgroundColor: AppColors.primary,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
                 ),
                 child: const Text(
-                  "Giriş Yap",
-                  style: TextStyle(fontSize: 18, color: Colors.white),
+                  'GİRİŞ YAP',
+                  style: TextStyle(color: Colors.white),
                 ),
               ),
-
-              const SizedBox(height: 16),
-
               TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const SignupScreen(),
-                    ),
-                  );
-                },
-                child: const Text(
-                  "Hesabın yok mu? Kayıt Ol",
-                  style: TextStyle(color: AppColors.secondary),
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SignupScreen()),
                 ),
+                child: const Text('Kayıt Ol'),
               ),
             ],
           ),

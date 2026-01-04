@@ -1,217 +1,221 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 import '../../core/app_colors.dart';
 import '../../core/book_service.dart';
+import '../../core/auth_service.dart';
+import '../../models/book_model.dart';
 
 class AddBookScreen extends StatefulWidget {
-  const AddBookScreen({super.key});
+  final Book? bookToEdit;
+  const AddBookScreen({super.key, this.bookToEdit});
 
   @override
   State<AddBookScreen> createState() => _AddBookScreenState();
 }
 
 class _AddBookScreenState extends State<AddBookScreen> {
-  final _titleController = TextEditingController();
-  final _descController = TextEditingController();
-  final _tagsController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  late TextEditingController _titleController;
+  late TextEditingController _descController;
+  late TextEditingController _imageUrlController;
 
-  // Varsayılan değerler
-  String _selectedCategory = 'Genel';
-  bool _isPublished = false; // Başlangıçta Taslak olsun
-  final _bookService = BookService();
-
+  // Kategori Listesi
   final List<String> _categories = [
     'Genel',
+    'Roman',
+    'Klasik',
     'Bilim Kurgu',
-    'Fantastik',
-    'Romantik',
-    'Macera',
-    'Korku',
-    'Polisiye',
+    'Fantezi',
+    'Şiir',
+    'Tarih',
+    'Kişisel Gelişim',
   ];
+  String _selectedCategory = 'Genel';
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController(
+      text: widget.bookToEdit?.title ?? "",
+    );
+    _descController = TextEditingController(
+      text: widget.bookToEdit?.description ?? "",
+    );
+    _imageUrlController = TextEditingController(
+      text: widget.bookToEdit?.imageUrl ?? "",
+    );
+
+    // Düzenleme modundaysak mevcut kategoriyi seç
+    if (widget.bookToEdit != null &&
+        _categories.contains(widget.bookToEdit!.category)) {
+      _selectedCategory = widget.bookToEdit!.category;
+    }
+  }
+
+  void _saveStory() {
+    if (_formKey.currentState!.validate()) {
+      final bookService = Provider.of<BookService>(context, listen: false);
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final String currentOwner = authService.currentUserEmail ?? "anonymous";
+
+      if (widget.bookToEdit == null) {
+        final newBook = Book(
+          id: DateTime.now().toString(),
+          title: _titleController.text,
+          author: "Yazar: ${currentOwner.split('@')[0]}",
+          ownerId: currentOwner,
+          description: _descController.text,
+          imageUrl: _imageUrlController.text.isNotEmpty
+              ? _imageUrlController.text
+              : null,
+          chapters: [],
+          isPublished: false,
+          category: _selectedCategory, // Seçilen kategori
+        );
+        bookService.addBook(newBook);
+      } else {
+        final updatedBook = Book(
+          id: widget.bookToEdit!.id,
+          title: _titleController.text,
+          author: widget.bookToEdit!.author,
+          ownerId: widget.bookToEdit!.ownerId,
+          description: _descController.text,
+          imageUrl: _imageUrlController.text.isNotEmpty
+              ? _imageUrlController.text
+              : null,
+          chapters: widget.bookToEdit!.chapters,
+          isPublished: widget.bookToEdit!.isPublished,
+          category: _selectedCategory, // Seçilen kategori
+        );
+        bookService.updateBook(widget.bookToEdit!, updatedBook);
+      }
+
+      Navigator.pop(context);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    String currentImage = _imageUrlController.text;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text(
-          "Yeni Kitap Tasarla",
-          style: TextStyle(color: AppColors.textDark),
+        title: Text(
+          widget.bookToEdit == null ? "Yeni Hikaye" : "Hikaye Düzenle",
         ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.textDark),
+        actions: [
+          TextButton(
+            onPressed: _saveStory,
+            child: const Text(
+              "KAYDET",
+              style: TextStyle(
+                color: AppColors.primary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 1. Kitap Adı
-            _buildLabel("Kitap Adı"),
-            TextField(
-              controller: _titleController,
-              decoration: _inputDeco("Örn: Zamanın Ötesinde"),
-            ),
-            const SizedBox(height: 20),
-
-            // 2. Kategori Seçimi
-            _buildLabel("Tür / Kategori"),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade400),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: _selectedCategory,
-                  isExpanded: true,
-                  items: _categories.map((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value),
-                    );
-                  }).toList(),
-                  onChanged: (val) => setState(() => _selectedCategory = val!),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // 3. Açıklama / Arka Kapak Yazısı
-            _buildLabel("Kitap Açıklaması (Özet)"),
-            TextField(
-              controller: _descController,
-              maxLines: 4,
-              decoration: _inputDeco("Okuyucuyu çekecek kısa bir özet..."),
-            ),
-            const SizedBox(height: 20),
-
-            // 4. Anahtar Kelimeler
-            _buildLabel("Etiketler (Virgülle ayırın)"),
-            TextField(
-              controller: _tagsController,
-              decoration: _inputDeco("büyü, uzay, aşk, gizem"),
-            ),
-            const SizedBox(height: 20),
-
-            // 5. Yayın Durumu (Switch)
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: _isPublished
-                    ? AppColors.primary.withOpacity(0.1)
-                    : Colors.grey[200],
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: _isPublished ? AppColors.primary : Colors.grey,
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    _isPublished ? "Durum: YAYINDA 🚀" : "Durum: TASLAK 📝",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: _isPublished
-                          ? AppColors.primary
-                          : Colors.grey[700],
-                    ),
+        padding: const EdgeInsets.all(20),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Kapak Resmi Alanı (Değişmedi)
+              Center(
+                child: Container(
+                  height: 200,
+                  width: 140,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        blurRadius: 10,
+                        color: Colors.black.withOpacity(0.1),
+                      ),
+                    ],
+                    image: currentImage.isNotEmpty
+                        ? DecorationImage(
+                            image: NetworkImage(currentImage),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
                   ),
-                  Switch(
-                    value: _isPublished,
-                    activeColor: AppColors.primary,
-                    onChanged: (val) => setState(() => _isPublished = val),
-                  ),
-                ],
+                  child: currentImage.isEmpty
+                      ? const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.add_a_photo, color: Colors.grey),
+                            Text("Kapak", style: TextStyle(color: Colors.grey)),
+                          ],
+                        )
+                      : null,
+                ),
               ),
-            ),
-            const SizedBox(height: 32),
+              const SizedBox(height: 20),
 
-            // 6. OLUŞTUR BUTONU
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _saveBook,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.textDark,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+              TextField(
+                controller: _imageUrlController,
+                decoration: const InputDecoration(
+                  labelText: "Kapak Linki",
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.link),
                 ),
-                child: const Text(
-                  "Kitabı Oluştur ve Yazmaya Başla",
-                  style: TextStyle(fontSize: 16, color: Colors.white),
+                onChanged: (val) => setState(() {}),
+              ),
+              const SizedBox(height: 20),
+
+              // KATEGORİ SEÇİMİ (YENİ)
+              DropdownButtonFormField<String>(
+                value: _selectedCategory,
+                decoration: const InputDecoration(
+                  labelText: "Tür / Kategori",
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.category),
+                ),
+                items: _categories.map((String category) {
+                  return DropdownMenuItem<String>(
+                    value: category,
+                    child: Text(category),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedCategory = newValue!;
+                  });
+                },
+              ),
+              const SizedBox(height: 20),
+
+              TextFormField(
+                controller: _titleController,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+                decoration: const InputDecoration(
+                  hintText: "Hikaye Başlığı",
+                  border: InputBorder.none,
+                ),
+                validator: (v) => v!.isEmpty ? "Başlık gerekli" : null,
+              ),
+              const Divider(),
+              TextFormField(
+                controller: _descController,
+                maxLines: 5,
+                decoration: const InputDecoration(
+                  hintText: "Konusu ne?",
+                  border: InputBorder.none,
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
-  }
-
-  // Yardımcı Tasarım Fonksiyonları
-  Widget _buildLabel(String text) => Padding(
-    padding: const EdgeInsets.only(bottom: 8.0),
-    child: Text(
-      text,
-      style: const TextStyle(
-        fontWeight: FontWeight.bold,
-        color: AppColors.textDark,
-      ),
-    ),
-  );
-
-  InputDecoration _inputDeco(String hint) => InputDecoration(
-    hintText: hint,
-    filled: true,
-    fillColor: Colors.white,
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: BorderSide(color: Colors.grey.shade400),
-    ),
-  );
-
-  void _saveBook() async {
-    final title = _titleController.text.trim();
-    final desc = _descController.text.trim();
-
-    if (title.isEmpty || desc.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Başlık ve Açıklama zorunludur")),
-      );
-      return;
-    }
-
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-
-    final result = await _bookService.createBook(
-      title: title,
-      description: desc,
-      imageUrl: "", // Şimdilik boş, sonra ekleriz
-      category: _selectedCategory,
-      tags: _tagsController.text.trim(),
-      isPublished: _isPublished,
-      uid: user.uid,
-    );
-
-    if (result == "Success") {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Kitap oluşturuldu!")));
-      Navigator.pop(context);
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(result ?? "Hata")));
-    }
   }
 }
